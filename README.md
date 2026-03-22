@@ -25,8 +25,8 @@
    ```bash
    python manage.py shell
 3. Импортируйте функции в консоль:
-```python
-from hacks import fix_marks, remove_chastisements, create_commendation
+   ```python
+   from hacks import fix_marks, remove_chastisements, create_commendation
 
 ### Способ 2: Копирование кода в консоль
 
