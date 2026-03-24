@@ -38,37 +38,34 @@ COMMENDATIONS = [
 ]
 
 
-class SchoolkidError(Exception):
-	pass
-
-
-class LessonNotFoundError(Exception):
-    pass
+def get_schoolkid(name):
+    try:
+        return Schoolkid.objects.get(full_name__contains=name)
+    except Schoolkid.DoesNotExist:
+        print(f"Ошибка: Ученик '{name}' не найден.")
+        return None
+    except Schoolkid.MultipleObjectsReturned:
+        raise ValueError(
+            f"Ошибка: Найдено несколько учеников с именем '{name}'"
+        )
 
 
 def fix_marks(schoolkid_name):
-	marks = Mark.objects.filter(
-		schoolkid__full_name__contains=schoolkid_name, 
-		points__lt=4
-	).update(points=5)
+	child = get_schoolkid(schoolkid_name)
+	if child:
+		Mark.objects.filter(schoolkid=child, points__lt=4).update(points=5)
 
 
 def remove_chastisements(schoolkid_name):
-	chastisements = Chastisement.objects.filter(
-		schoolkid__full_name__contains=schoolkid_name
-	).delete()
+	child = get_schoolkid(schoolkid_name)
+	if child:
+		Chastisement.objects.filter(schoolkid=child).delete()
 
 
 def create_commendation(schoolkid_name, subject_title):
-	try:
-		child = Schoolkid.objects.get(full_name__contains=schoolkid_name)
-	except Schoolkid.DoesNotExist:
-		print(f"Ошибка: Ученик '{schoolkid_name}' не найден.")
-		return None
-	except Schoolkid.MultipleObjectsReturned:
-		raise SchoolkidError(
-			f"Ошибка: Найдено несколько учеников с именем '{schoolkid_name}'"
-		)
+	child = get_schoolkid(schoolkid_name)
+	if not child:
+		return
 	
 	subject = Subject.objects.filter(
 		title__contains=subject_title,
@@ -89,7 +86,7 @@ def create_commendation(schoolkid_name, subject_title):
 	target_lesson = available_for_commendations.first()
 
 	if not target_lesson:
-		raise LessonNotFoundError(
+		raise ValueError(
 			f"У ученика {child.full_name} нет уроков по предмету '{subject_title}'."
 		)
 	
